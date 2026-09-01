@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "LISTA",
+    "slug": "lista",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#272727",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "package": "com.lista.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "plugins": [
+      "expo-sqlite",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow LISTA to use the microphone for voice input.",
+          "speechRecognitionPermission": "Allow LISTA to use speech recognition for voice input."
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bae0dd1b-f36f-4dc4-a5fa-914878b4e469"
+      }
+    },
+    "owner": "afxs14"
+  }
+}
