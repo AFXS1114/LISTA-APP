@@ -9,6 +9,8 @@ export type BrokerRecord = {
   broker_name: string;
   date: string;
   synced: number;
+  listed_in_journal: number;
+  listed_in_journal_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -59,6 +61,18 @@ export async function markBrokerSynced(id: number): Promise<void> {
   await db.runAsync(
     `UPDATE broker_records SET synced = 1, updated_at = datetime('now') WHERE id = ?`,
     [id]
+  );
+}
+
+export async function setBrokerJournalStatus(id: number, listedInJournal: boolean): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `UPDATE broker_records
+     SET listed_in_journal = ?,
+         listed_in_journal_at = ?,
+         updated_at = datetime('now')
+     WHERE id = ?`,
+    [listedInJournal ? 1 : 0, listedInJournal ? new Date().toISOString() : null, id]
   );
 }
 

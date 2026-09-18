@@ -6,7 +6,7 @@
 
 import { SQLiteDatabase } from 'expo-sqlite';
 
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 // Each migration is a list of SQL statements to run in order.
 // To add a new migration: bump CURRENT_SCHEMA_VERSION and add a
@@ -41,10 +41,10 @@ const migrations: Record<number, string[]> = {
     `CREATE INDEX IF NOT EXISTS idx_vessel_broker
       ON vessel_entries(broker_record_id)`,
   ],
-  // Example future migration (v2):
-  // 2: [
-  //   `ALTER TABLE broker_records ADD COLUMN notes TEXT`,
-  // ],
+  2: [
+    `ALTER TABLE broker_records ADD COLUMN listed_in_journal INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE broker_records ADD COLUMN listed_in_journal_at TEXT`,
+  ],
 };
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {

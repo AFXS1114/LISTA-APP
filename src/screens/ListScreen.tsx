@@ -21,8 +21,9 @@ import { spacing, radius } from '../theme/spacing';
 import { textStyles } from '../theme/typography';
 import { BrokerCard } from '../components/BrokerCard';
 import { useBrokerRecords } from '../hooks/useBrokerRecords';
-import { BrokerRecord } from '../db/brokerRepository';
+import { BrokerRecord, setBrokerJournalStatus } from '../db/brokerRepository';
 import type { ListStackParamList } from '../navigation/AppNavigator';
+import { queryCache } from '../cache/queryCache';
 
 type Nav = NativeStackNavigationProp<ListStackParamList, 'ListRoot'>;
 
@@ -37,6 +38,19 @@ export const ListScreen: React.FC = () => {
       navigation.navigate('BrokerDetail', { brokerId: record.id, brokerName: record.broker_name });
     },
     [navigation]
+  );
+
+  const handleToggleListed = useCallback(
+    async (recordId: number, currentValue: boolean) => {
+      try {
+        await setBrokerJournalStatus(recordId, !currentValue);
+        queryCache.invalidateAll();
+        await refresh();
+      } catch (error) {
+        console.error('[ListScreen] Failed to update journal status', error);
+      }
+    },
+    [refresh]
   );
 
   const renderEmpty = () => (
@@ -102,7 +116,11 @@ export const ListScreen: React.FC = () => {
         data={records}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <BrokerCard record={item} onPress={() => handleCardPress(item)} />
+          <BrokerCard
+            record={item}
+            onPress={() => handleCardPress(item)}
+            onToggleListed={() => handleToggleListed(item.id, item.listed_in_journal === 1)}
+          />
         )}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={records.length === 0 ? styles.listEmpty : styles.listContent}

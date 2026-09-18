@@ -14,6 +14,7 @@ type Props = {
   record: BrokerRecord;
   vesselCount?: number;
   onPress: () => void;
+  onToggleListed?: () => void;
 };
 
 function formatDate(isoDate: string): string {
@@ -30,8 +31,9 @@ function formatDate(isoDate: string): string {
   }
 }
 
-export const BrokerCard: React.FC<Props> = ({ record, vesselCount, onPress }) => {
+export const BrokerCard: React.FC<Props> = ({ record, vesselCount, onPress, onToggleListed }) => {
   const { theme } = useTheme();
+  const isListed = record.listed_in_journal === 1;
 
   return (
     <TouchableOpacity
@@ -41,13 +43,13 @@ export const BrokerCard: React.FC<Props> = ({ record, vesselCount, onPress }) =>
         styles.card,
         {
           backgroundColor: theme.card,
-          borderColor: theme.cardBorder,
+          borderColor: isListed ? theme.accent : theme.cardBorder,
           shadowColor: theme.shadow,
         },
       ]}
     >
       {/* Left accent bar */}
-      <View style={[styles.accent, { backgroundColor: theme.primary }]} />
+      <View style={[styles.accent, { backgroundColor: isListed ? theme.accent : theme.primary }]} />
 
       <View style={styles.content}>
         <View style={styles.row}>
@@ -92,6 +94,33 @@ export const BrokerCard: React.FC<Props> = ({ record, vesselCount, onPress }) =>
             </Text>
           </View>
         )}
+
+        <View style={styles.actionRow}>
+          <View style={[styles.statusPill, { backgroundColor: isListed ? theme.accent + '22' : theme.inputBackground }]}>
+            <MaterialCommunityIcons
+              name={isListed ? 'check-circle' : 'bookmark-outline'}
+              size={14}
+              color={isListed ? theme.accent : theme.textSecondary}
+            />
+            <Text style={[textStyles.caption, { color: isListed ? theme.accent : theme.textSecondary }]}>
+              {isListed ? 'In journal' : 'Not listed'}
+            </Text>
+          </View>
+
+          {onToggleListed && (
+            <TouchableOpacity
+              style={[styles.toggleBtn, { backgroundColor: isListed ? theme.accent : theme.primary }]}
+              onPress={(event) => {
+                event.stopPropagation?.();
+                onToggleListed();
+              }}
+            >
+              <Text style={[textStyles.caption, { color: theme.background, fontWeight: '700' }]}>
+                {isListed ? 'Listed' : 'Mark listed'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <MaterialCommunityIcons
@@ -128,6 +157,26 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+  },
+  toggleBtn: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
   },
   icon: {
     marginRight: spacing.xs,
