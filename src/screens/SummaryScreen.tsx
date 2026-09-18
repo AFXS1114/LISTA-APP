@@ -4,7 +4,7 @@
 //  grouped by specie.
 // ─────────────────────────────────────────────
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,9 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { spacing, radius, shadow } from '../theme/spacing';
@@ -56,6 +58,18 @@ export const SummaryScreen: React.FC = () => {
   const { theme } = useTheme();
   const [summaries, setSummaries] = useState<BrokerSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const selectedDateKey = useMemo(() => {
+    const offset = selectedDate.getTimezoneOffset() * 60000;
+    return new Date(selectedDate.getTime() - offset).toISOString().slice(0, 10);
+  }, [selectedDate]);
+
+  const filteredSummaries = useMemo(() => {
+    if (!selectedDateKey) return summaries;
+    return summaries.filter((summary) => summary.date === selectedDateKey);
+  }, [selectedDateKey, summaries]);
 
   const load = useCallback(async (forceRefresh = false) => {
     try {
@@ -82,18 +96,46 @@ export const SummaryScreen: React.FC = () => {
   useEffect(() => { load(); }, [load]);
 
   // Grand totals
-  const grandTotalVessels = summaries.reduce((s, b) => s + b.totalVessels, 0);
-  const grandTotalTubs = summaries.reduce((s, b) => s + b.totalTubs, 0);
+  const grandTotalVessels = filteredSummaries.reduce((s, b) => s + b.totalVessels, 0);
+  const grandTotalTubs = filteredSummaries.reduce((s, b) => s + b.totalTubs, 0);
 
   const renderHeader = () => (
     <View>
-      {/* Grand total strip */}
+      <TouchableOpacity
+        style={[styles.dateFilter, { backgroundColor: theme.surface, borderColor: theme.divider }]}
+        onPress={() => setShowDatePicker(true)}
+      >
+        <MaterialCommunityIcons name="calendar" size={18} color={theme.primary} />
+        <Text style={[textStyles.bodyMedium, { color: theme.textPrimary, flex: 1 }]}>
+          {selectedDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+        </Text>
+        <MaterialCommunityIcons name="chevron-down" size={18} color={theme.textSecondary} />
+      </TouchableOpacity>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={(_, selected) => {
+            setShowDatePicker(false);
+            if (selected) {
+              setSelectedDate(selected);
+            }
+          }}
+        />
+      )}
+
       <View style={[styles.grandTotalStrip, { backgroundColor: theme.primary }]}>
         <TotalStat icon="ferry" label="Total Vessels" value={grandTotalVessels} textColor={theme.textOnPrimary} />
         <View style={[styles.statDivider, { backgroundColor: theme.textOnPrimary + '44' }]} />
         <TotalStat icon="bucket-outline" label="Total Tubs" value={grandTotalTubs} textColor={theme.textOnPrimary} />
         <View style={[styles.statDivider, { backgroundColor: theme.textOnPrimary + '44' }]} />
-        <TotalStat icon="account-tie" label="Brokers" value={summaries.length} textColor={theme.textOnPrimary} />
+        <TotalStat icon="account-tie" label="Brokers" value={filteredSummaries.length} textColor={theme.textOnPrimary} />
       </View>
 
       <Text style={[textStyles.label, styles.sectionLabel, { color: theme.textSecondary }]}>
@@ -121,17 +163,17 @@ export const SummaryScreen: React.FC = () => {
       </View>
 
       <FlatList
-        data={summaries}
+        data={filteredSummaries}
         keyExtractor={(item) => String(item.broker_id)}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <MaterialCommunityIcons name="chart-bar" size={56} color={theme.textDisabled} />
             <Text style={[textStyles.h4, { color: theme.textDisabled, marginTop: spacing.lg }]}>
-              No data yet
+              No data for this day
             </Text>
             <Text style={[textStyles.bodySm, { color: theme.textDisabled, textAlign: 'center' }]}>
-              Add broker records to see the summary
+              Select another date or add a broker record for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </Text>
           </View>
         }
@@ -144,7 +186,7 @@ export const SummaryScreen: React.FC = () => {
             colors={[theme.primary]}
           />
         }
-        contentContainerStyle={summaries.length === 0 ? styles.emptyList : styles.listContent}
+        contentContainerStyle={filteredSummaries.length === 0 ? styles.emptyList : styles.listContent}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -228,6 +270,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  dateFilter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   grandTotalStrip: {
     flexDirection: 'row',

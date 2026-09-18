@@ -13,6 +13,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { spacing, radius } from '../theme/spacing';
@@ -42,6 +43,7 @@ const TAB_WIDTH = SCREEN_WIDTH / TABS.length;
 
 export const TabBar: React.FC<Props> = ({ activeIndex, onTabPress, scrollX }) => {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const indicatorLeft = scrollX.interpolate({
     inputRange: TABS.map((_, i) => i * SCREEN_WIDTH),
@@ -50,7 +52,15 @@ export const TabBar: React.FC<Props> = ({ activeIndex, onTabPress, scrollX }) =>
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.tabBar }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.tabBar,
+          paddingBottom: Math.max(insets.bottom, 8),
+        },
+      ]}
+    >
       {/* Active indicator line */}
       <Animated.View
         style={[
@@ -84,10 +94,11 @@ export const TabBar: React.FC<Props> = ({ activeIndex, onTabPress, scrollX }) =>
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    height: 64,
+    height: 74,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
     position: 'relative',
+    paddingTop: 8,
   },
   tab: {
     flex: 1,

@@ -14,6 +14,7 @@ type Props = {
   record: BrokerRecord;
   vesselCount?: number;
   onPress: () => void;
+  onLongPress?: () => void;
   onToggleListed?: () => void;
 };
 
@@ -31,13 +32,14 @@ function formatDate(isoDate: string): string {
   }
 }
 
-export const BrokerCard: React.FC<Props> = ({ record, vesselCount, onPress, onToggleListed }) => {
+export const BrokerCard: React.FC<Props> = ({ record, vesselCount, onPress, onLongPress, onToggleListed }) => {
   const { theme } = useTheme();
   const isListed = record.listed_in_journal === 1;
 
   return (
     <TouchableOpacity
       onPress={onPress}
+      onLongPress={onLongPress}
       activeOpacity={0.75}
       style={[
         styles.card,

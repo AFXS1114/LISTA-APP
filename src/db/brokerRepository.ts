@@ -20,6 +20,11 @@ export type CreateBrokerInput = {
   date: string;
 };
 
+export type UpdateBrokerInput = {
+  broker_name?: string;
+  date?: string;
+};
+
 export async function createBrokerRecord(input: CreateBrokerInput): Promise<number> {
   const db = await getDatabase();
   const result = await db.runAsync(
@@ -27,6 +32,33 @@ export async function createBrokerRecord(input: CreateBrokerInput): Promise<numb
     [input.broker_name, input.date]
   );
   return result.lastInsertRowId;
+}
+
+export async function updateBrokerRecord(id: number, input: UpdateBrokerInput): Promise<void> {
+  const db = await getDatabase();
+  const parts: string[] = [];
+  const values: (string | number)[] = [];
+
+  if (input.broker_name !== undefined) {
+    parts.push('broker_name = ?');
+    values.push(input.broker_name);
+  }
+
+  if (input.date !== undefined) {
+    parts.push('date = ?');
+    values.push(input.date);
+  }
+
+  if (parts.length === 0) return;
+
+  parts.push('synced = 0');
+  parts.push("updated_at = datetime('now')");
+  values.push(id);
+
+  await db.runAsync(
+    `UPDATE broker_records SET ${parts.join(', ')} WHERE id = ?`,
+    values
+  );
 }
 
 export async function getAllBrokerRecords(): Promise<BrokerRecord[]> {

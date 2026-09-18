@@ -74,6 +74,12 @@ export function useVoiceInput({ onFieldsParsed, onError }: Options) {
   });
 
   useSpeechRecognitionEvent('error', (event) => {
+    const error = String(event.error ?? '').toLowerCase();
+    if (error.includes('aborted') || error.includes('cancelled')) {
+      setIsListening(false);
+      return;
+    }
+
     setIsListening(false);
     onError?.(`Voice error: ${event.error}`);
   });
